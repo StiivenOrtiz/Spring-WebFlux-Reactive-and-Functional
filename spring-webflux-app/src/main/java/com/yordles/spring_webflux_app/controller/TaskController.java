@@ -33,9 +33,11 @@ public class TaskController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Task> createTask(@RequestBody Task task) {
-        return taskService.createTask(task);
+    public Mono<ResponseEntity<Task>> createTask(@RequestBody Task task) {
+        return taskService.createTask(task)
+                .map(savedTask -> ResponseEntity.status(HttpStatus.CREATED).body(savedTask))
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(null));
     }
 
     @PutMapping("/{id}")
@@ -48,7 +50,7 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> deleteTask(@PathVariable String id) {
         return taskService.deleteTask(id)
-                .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT)))
+                .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

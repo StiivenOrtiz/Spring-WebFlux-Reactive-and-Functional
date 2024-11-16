@@ -25,10 +25,11 @@ public class TaskService {
         return taskRepository.findByEmail(email);
     }
 
+    // TaskService.java - modify createTask method
     public Mono<Task> createTask(Task task) {
         return userService.getUserByEmail(task.getEmail())
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
-                .then(taskRepository.save(task));
+                .flatMap(user -> taskRepository.save(task))
+                .switchIfEmpty(Mono.empty());
     }
 
     public Mono<Task> updateTask(String id, Task task) {
@@ -38,10 +39,13 @@ public class TaskService {
                     existingTask.setDescription(task.getDescription());
                     existingTask.setCompleted(task.isCompleted());
                     return taskRepository.save(existingTask);
-                });
+                })
+                .switchIfEmpty(Mono.empty()); // Handle non-existent task
     }
 
     public Mono<Void> deleteTask(String id) {
-        return taskRepository.deleteById(id);
+        return taskRepository.findById(id)
+                .flatMap(existingTask -> taskRepository.deleteById(id))
+                .switchIfEmpty(Mono.empty()); // Handle non-existent task
     }
 }

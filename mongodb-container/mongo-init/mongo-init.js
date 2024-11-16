@@ -1,4 +1,32 @@
+// Switch to admin database first
+db = db.getSiblingDB('admin');
+
+// Check if user exists before creating
+const userExists = db.getUser('mongo_user');
+if (!userExists) {
+  // Create the root user only if it doesn't exist
+  db.createUser({
+    user: 'mongo_user',
+    pwd: 'mongo_pass',
+    roles: [
+      { role: 'root', db: 'admin' },
+      { role: 'userAdminAnyDatabase', db: 'admin' },
+      { role: 'dbAdminAnyDatabase', db: 'admin' },
+      { role: 'readWriteAnyDatabase', db: 'admin' },
+    ],
+  });
+}
+
+// Switch to taskdb database
 db = db.getSiblingDB('taskdb');
+
+// Drop existing collections if they exist to avoid duplicates
+if (db.getCollectionNames().indexOf('users') !== -1) {
+  db.users.drop();
+}
+if (db.getCollectionNames().indexOf('tasks') !== -1) {
+  db.tasks.drop();
+}
 
 // Crear colección de usuarios
 db.createCollection('users');
